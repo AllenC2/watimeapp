@@ -1,0 +1,11 @@
+node_modules/
+.next/
+auth_info_baileys/
+public/uploads/
+messages.db
+whatsapp-status.json
+.env
+.env.*
+!.env.example
+.DS_Store
+*.log

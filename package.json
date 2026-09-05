@@ -1,0 +1,27 @@
+{
+  "name": "bot-canal-wp",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "postinstall": "node scripts/patch-baileys-newsletter.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@whiskeysockets/baileys": "^7.0.0-rc13",
+    "lucide-react": "^1.26.0",
+    "next": "^16.2.11",
+    "pino": "^10.3.1",
+    "qrcode": "^1.5.4",
+    "qrcode-terminal": "^0.12.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "sqlite3": "^6.0.1"
+  }
+}
