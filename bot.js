@@ -9,6 +9,16 @@ const sqlite3 = require('sqlite3');
 const path = require('path');
 const fs = require('fs');
 
+if (process.env.ALLOW_LEGACY_BOT !== '1') {
+  console.error(
+    '[WATime] bot.js está desactivado. El envío lo hace el panel Next.js por usuario.\n' +
+      'Si necesitas el bot legado, arráncalo con ALLOW_LEGACY_BOT=1 (no lo uses en multi-usuario).'
+  );
+  process.exit(1);
+}
+
+console.warn('[WATime] bot.js no aísla datos por usuario. Usa el panel Next.js (lib/whatsapp.js).');
+
 const dbPath = path.resolve(__dirname, 'messages.db');
 const db = new sqlite3.Database(dbPath);
 
@@ -207,7 +217,13 @@ function startScheduler() {
             }
             assertChannelMediaAccepted(resultJid, sent);
             
-            await runQuery(`UPDATE scheduled_messages SET status = 'sent' WHERE id = ?`, [msg.id]);
+            const waUser = globalSock?.user || {};
+            const waPhone = String(waUser.id || '').split(':')[0].split('@')[0] || '';
+            const waName = waUser.name || waUser.notify || '';
+            await runQuery(
+              `UPDATE scheduled_messages SET status = 'sent', whatsapp_phone = ?, whatsapp_name = ? WHERE id = ?`,
+              [waPhone, waName, msg.id]
+            );
             console.log(`[✓] Mensaje ID ${msg.id} enviado con éxito.`);
             
           } catch (sendError) {

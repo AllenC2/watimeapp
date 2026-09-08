@@ -4,6 +4,7 @@ auth_info_baileys/
 public/uploads/
 messages.db
 whatsapp-status.json
+whatsapp-status/
 .env
 .env.*
 !.env.example

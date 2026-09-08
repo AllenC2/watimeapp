@@ -1,13 +1,17 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Smartphone, X } from 'lucide-react';
+import { usePreferences } from './PreferencesProvider';
+import { tApiError } from '../lib/i18n';
 
 const EMPTY = {
   state: 'offline',
-  stateLabel: 'Desconectado',
-  phoneLabel: 'Sin número',
-  platformLabel: 'WhatsApp',
+  phone: '',
+  phoneLabel: '',
+  platform: '',
+  platformLabel: '',
   name: '',
   connected: false,
   connecting: false,
@@ -16,7 +20,30 @@ const EMPTY = {
   error: '',
 };
 
-export default function WhatsAppStatusPill() {
+function platformText(platform, t) {
+  switch (String(platform || '').toLowerCase()) {
+    case 'android':
+      return t('wa.platform.android');
+    case 'ios':
+      return t('wa.platform.ios');
+    case 'smba':
+    case 'smb':
+      return t('wa.platform.business');
+    case 'web':
+      return t('wa.platform.web');
+    default:
+      return platform ? String(platform) : t('wa.platform.default');
+  }
+}
+
+function stateText(status, t) {
+  if (status.connected) return t('wa.connected');
+  if (status.connecting) return status.qrDataUrl ? t('wa.waitingQr') : t('wa.connecting');
+  return t('wa.disconnected');
+}
+
+export default function WhatsAppStatusPill({ onOpenSession }) {
+  const { t } = usePreferences();
   const [status, setStatus] = useState(EMPTY);
   const [modal, setModal] = useState(null);
   const [busy, setBusy] = useState(false);
@@ -29,8 +56,8 @@ export default function WhatsAppStatusPill() {
     } catch {
       throw new Error(
         res.ok
-          ? 'El servidor no devolvió JSON'
-          : `Error ${res.status} al hablar con WhatsApp`
+          ? t('wa.errorNotJson')
+          : t('wa.errorHttp', { status: res.status })
       );
     }
   };
@@ -38,7 +65,7 @@ export default function WhatsAppStatusPill() {
   const load = async () => {
     const res = await fetch('/api/whatsapp/status', { cache: 'no-store' });
     const data = await readJson(res);
-    if (!res.ok) throw new Error(data.error || 'No se pudo leer el estado');
+    if (!res.ok) throw new Error(tApiError(t, data, 'wa.errorStatus'));
     return data;
   };
 
@@ -51,9 +78,6 @@ export default function WhatsAppStatusPill() {
         if (!cancelled) {
           setStatus((prev) => {
             if (data.qrDataUrl) setError('');
-            if (prev.qrDataUrl && !data.qrDataUrl && !data.connected) {
-              return { ...data, qrDataUrl: prev.qrDataUrl };
-            }
             return data;
           });
         }
@@ -88,13 +112,13 @@ export default function WhatsAppStatusPill() {
         body: JSON.stringify({ force: false }),
       });
       const data = await readJson(res);
-      if (!res.ok) throw new Error(data.error || 'No se pudo conectar');
+      if (!res.ok) throw new Error(tApiError(t, data, 'wa.errorConnect'));
       setStatus(data);
       if (data.error && !data.qrDataUrl && !data.connected) {
         setError(data.error);
       }
     } catch (err) {
-      setError(err.message || 'No se pudo iniciar la conexión');
+      setError(err.message || t('wa.errorStart'));
     } finally {
       setBusy(false);
     }
@@ -106,11 +130,11 @@ export default function WhatsAppStatusPill() {
     try {
       const res = await fetch('/api/whatsapp/logout', { method: 'POST' });
       const data = await readJson(res);
-      if (!res.ok) throw new Error(data.error || 'No se pudo cerrar la sesión');
+      if (!res.ok) throw new Error(tApiError(t, data, 'wa.errorLogout'));
       setStatus({ ...EMPTY, ...data });
       setModal(null);
     } catch (err) {
-      setError(err.message || 'No se pudo cerrar la sesión');
+      setError(err.message || t('wa.errorLogout'));
     } finally {
       setBusy(false);
     }
@@ -127,13 +151,13 @@ export default function WhatsAppStatusPill() {
         body: JSON.stringify({ force: true }),
       });
       const connectData = await readJson(connectRes);
-      if (!connectRes.ok) throw new Error(connectData.error || 'No se pudo volver a conectar');
+      if (!connectRes.ok) throw new Error(tApiError(t, connectData, 'wa.errorReconnect'));
       setStatus(connectData);
       if (connectData.error && !connectData.qrDataUrl && !connectData.connected) {
         setError(connectData.error);
       }
     } catch (err) {
-      setError(err.message || 'No se pudo reiniciar la sesión');
+      setError(err.message || t('wa.errorReset'));
     } finally {
       setBusy(false);
     }
@@ -141,11 +165,14 @@ export default function WhatsAppStatusPill() {
 
   const onPillClick = () => {
     setError('');
+    onOpenSession?.();
     if (status.connected) setModal('logout');
     else startConnect();
   };
 
-  const details = [status.phoneLabel, status.platformLabel, status.name]
+  const phoneLabel = status.phone ? status.phoneLabel : t('wa.noNumber');
+  const platformLabel = platformText(status.platform, t);
+  const details = [phoneLabel, platformLabel, status.name]
     .filter(Boolean)
     .join(' · ');
 
@@ -155,22 +182,22 @@ export default function WhatsAppStatusPill() {
         type="button"
         className="status-pill"
         data-state={status.state}
-        title={`${details}. Clic para ${status.connected ? 'cerrar sesión' : 'conectar'}`}
+        title={status.connected ? t('wa.pillTitleLogout', { details }) : t('wa.pillTitleConnect', { details })}
         onClick={onPillClick}
       >
         <span className="status-pill-dot" aria-hidden="true" />
         <Smartphone size={14} />
         <div className="status-pill-copy">
-          <span className="status-pill-phone">{status.phoneLabel}</span>
+          <span className="status-pill-phone">{phoneLabel}</span>
           <span className="status-pill-meta">
-            {status.platformLabel}
+            {platformLabel}
             {status.name ? ` · ${status.name}` : ''}
           </span>
         </div>
-        <span className="status-pill-state">{status.stateLabel}</span>
+        <span className="status-pill-state">{stateText(status, t)}</span>
       </button>
 
-      {modal && (
+      {modal && createPortal(
         <div className="modal-overlay" onClick={() => !busy && setModal(null)}>
           <div
             className="modal-panel session-modal"
@@ -179,11 +206,11 @@ export default function WhatsAppStatusPill() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="modal-header">
-              <h2>{status.connected || modal === 'logout' ? 'Cerrar sesión' : 'Conectar WhatsApp'}</h2>
+              <h2>{status.connected || modal === 'logout' ? t('wa.logoutTitle') : t('wa.connectTitle')}</h2>
               <button
                 type="button"
                 className="nav-btn"
-                aria-label="Cerrar"
+                aria-label={t('common.close')}
                 disabled={busy}
                 onClick={() => setModal(null)}
               >
@@ -194,16 +221,18 @@ export default function WhatsAppStatusPill() {
             {modal === 'logout' ? (
               <>
                 <p className="session-modal-text">
-                  Esto desconecta {status.phoneLabel !== 'Sin número' ? status.phoneLabel : 'el celular'}
-                  {status.name ? ` (${status.name})` : ''} y cierra la sesión de WhatsApp.
+                  {t('wa.logoutCopy', {
+                    phone: status.phone ? phoneLabel : t('wa.logoutPhoneFallback'),
+                    name: status.name ? t('wa.logoutName', { name: status.name }) : '',
+                  })}
                 </p>
                 {error && <p className="session-modal-error">{error}</p>}
                 <div className="session-modal-actions">
                   <button type="button" className="nav-btn" disabled={busy} onClick={() => setModal(null)}>
-                    Cancelar
+                    {t('common.cancel')}
                   </button>
                   <button type="button" className="btn-danger" disabled={busy} onClick={confirmLogout}>
-                    {busy ? 'Cerrando...' : 'Cerrar sesión'}
+                    {busy ? t('wa.loggingOut') : t('wa.logoutAction')}
                   </button>
                 </div>
               </>
@@ -211,16 +240,16 @@ export default function WhatsAppStatusPill() {
               <>
                 <p className="session-modal-text">
                   {status.qrDataUrl
-                    ? 'Escanea este código con WhatsApp: Dispositivos vinculados.'
+                    ? t('wa.scanQr')
                     : status.hasSession
-                      ? 'Reconectando con la sesión guardada...'
-                      : 'Generando código QR...'}
+                      ? t('wa.reconnecting')
+                      : t('wa.generatingQr')}
                 </p>
                 <div className="qr-box">
                   {status.qrDataUrl ? (
-                    <img src={status.qrDataUrl} alt="Código QR de WhatsApp" />
+                    <img src={status.qrDataUrl} alt={t('wa.qrAlt')} />
                   ) : (
-                    <span>{busy || status.connecting ? 'Esperando QR...' : 'Sin QR todavía'}</span>
+                    <span>{busy || status.connecting ? t('wa.waitingQrDots') : t('wa.noQr')}</span>
                   )}
                 </div>
                 {(error || status.error) && (
@@ -234,14 +263,15 @@ export default function WhatsAppStatusPill() {
                       disabled={busy}
                       onClick={resetAndReconnect}
                     >
-                      {busy ? 'Reiniciando...' : 'Cerrar sesión y volver a conectar'}
+                      {busy ? t('wa.resetting') : t('wa.resetReconnect')}
                     </button>
                   </div>
                 )}
               </>
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );

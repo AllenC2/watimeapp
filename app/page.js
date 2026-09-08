@@ -1,12 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Plus, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 import CalendarView from '../components/CalendarView';
 import MessageForm from '../components/MessageForm';
+import { usePreferences } from '../components/PreferencesProvider';
 
 export default function Home() {
+  const { t } = usePreferences();
   const [messages, setMessages] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -48,16 +50,7 @@ export default function Home() {
     <div className="dashboard-container dashboard-container--agenda">
       <Sidebar />
       <main className="main-content main-content--agenda">
-        <header className="agenda-header">
-          <div>
-            <h1>Agenda</h1>
-            <p>Visualiza los mensajes programados por mes.</p>
-          </div>
-          <button type="button" className="btn-primary" onClick={() => setIsModalOpen(true)}>
-            <Plus size={18} /> Nuevo Mensaje
-          </button>
-        </header>
-        <CalendarView messages={messages} />
+        <CalendarView messages={messages} onNewMessage={() => setIsModalOpen(true)} />
       </main>
 
       {isModalOpen && (
@@ -70,11 +63,11 @@ export default function Home() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="modal-header">
-              <h2 id="new-message-title">Nuevo Mensaje</h2>
+              <h2 id="new-message-title">{t('message.title')}</h2>
               <button
                 type="button"
                 className="nav-btn"
-                aria-label="Cerrar"
+                aria-label={t('common.close')}
                 onClick={() => setIsModalOpen(false)}
               >
                 <X size={18} />

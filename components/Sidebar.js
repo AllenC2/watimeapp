@@ -1,34 +1,25 @@
 'use client';
 
-import { Calendar, History, Settings, MessageCircle } from 'lucide-react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import WhatsAppStatusPill from './WhatsAppStatusPill';
+import UserMenu from './UserMenu';
+import { usePreferences } from './PreferencesProvider';
+import { DEFAULT_LOGO_SRC } from '../lib/preferences';
 
 export default function Sidebar() {
-  const pathname = usePathname();
+  const { prefs, t } = usePreferences();
+  const logoSrc = prefs.logoDataUrl || DEFAULT_LOGO_SRC;
 
   return (
     <header className="topbar">
       <Link href="/" className="topbar-brand">
-        <MessageCircle size={22} color="#25D366" />
-        WP Dashboard
+        <img
+          src={logoSrc}
+          alt={t('brand.alt')}
+          className="topbar-logo"
+          data-default={!prefs.logoDataUrl}
+        />
       </Link>
-      <nav>
-        <Link href="/" className={pathname === '/' ? 'active' : ''}>
-          <Calendar size={16} />
-          <span>Agenda</span>
-        </Link>
-        <Link href="/programar" className={pathname === '/programar' ? 'active' : ''}>
-          <History size={16} />
-          <span>Programar</span>
-        </Link>
-        <a href="#">
-          <Settings size={16} />
-          <span>Configuración</span>
-        </a>
-      </nav>
-      <WhatsAppStatusPill />
+      <UserMenu />
     </header>
   );
 }
