@@ -6,6 +6,7 @@ import { AGENDA_VIEWS, detectTimeZone, HOUR_CLOCKS, LANGUAGES, THEMES, timeZoneM
 import { messages, tApiError, translate } from '../lib/i18n';
 import { passwordRuleError } from '../lib/password-rules';
 import { usePreferences } from './PreferencesProvider';
+import { useTour } from './TourProvider';
 
 const MENU_DEFS = [
   { id: 'general', titleKey: 'prefs.menu.general', descKey: 'prefs.menu.generalDesc', icon: SlidersHorizontal },
@@ -28,6 +29,7 @@ function formatRemain(ms) {
 
 export default function PreferencesPanel({ onTitleChange }) {
   const { prefs, applyPrefs, updatePrefs, resetLocalData, t, locale } = usePreferences();
+  const { startTour } = useTour();
   const [menu, setMenu] = useState('general');
   const [subpage, setSubpage] = useState(null);
   const [username, setUsername] = useState(prefs.username);
@@ -486,6 +488,10 @@ export default function PreferencesPanel({ onTitleChange }) {
                 </button>
               ))}
             </div>
+            <h3>{t('prefs.tour')}</h3>
+            <button type="button" className="prefs-tour-btn" onClick={() => startTour()}>
+              {t('prefs.tourStart')}
+            </button>
             {error && <p className="prefs-error">{error}</p>}
             {message && <p className="prefs-ok">{message}</p>}
           </div>

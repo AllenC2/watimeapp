@@ -5,7 +5,7 @@ import { runQuery, getQuery, getOne } from '../../../lib/db';
 import { normalizeIdentifier } from '../../../lib/contacts';
 import { AuthError, requireUser } from '../../../lib/auth';
 import { ApiError, jsonError } from '../../../lib/i18n/api';
-import { formatLocalDateTime, isScheduledInPast } from '../../../lib/schedule-time';
+import { formatLocalDateTime, isScheduledTooSoon } from '../../../lib/schedule-time';
 import { sendMessageNow } from '../../../lib/whatsapp';
 
 export const runtime = 'nodejs';
@@ -113,10 +113,10 @@ export async function POST(request) {
     }
 
     if (sendNow) {
-      scheduled_for = formatLocalDateTime();
+      scheduled_for = formatLocalDateTime(new Date(), user.timezone);
     } else {
       if (!scheduled_for) return jsonError('errors.missingFields', 400);
-      if (isScheduledInPast(scheduled_for)) return jsonError('errors.schedulePast', 400);
+      if (isScheduledTooSoon(scheduled_for, new Date(), user.timezone)) return jsonError('errors.schedulePast', 400);
     }
 
     const inserted = await runQuery(

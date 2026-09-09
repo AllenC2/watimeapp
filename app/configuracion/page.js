@@ -73,7 +73,7 @@ export default function Configuracion() {
             {roleLabel ? <span className="settings-profile-status">{roleLabel}</span> : null}
           </section>
 
-          <section className="settings-grid">
+          <section className="settings-grid" data-tour="settings">
             {sections.map((section) => {
               const Icon = section.icon;
               return (

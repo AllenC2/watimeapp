@@ -7,7 +7,9 @@ import {
   PREFS_STORAGE_KEY,
   applyLanguage,
   applyTheme,
+  detectTimeZone,
   readPrefs,
+  shouldAdoptBrowserTimeZone,
   writePrefs,
 } from '../lib/preferences';
 
@@ -50,8 +52,22 @@ export function PreferencesProvider({ children }) {
         return;
       }
       const data = await res.json();
-      setPrefs(data);
-      writePrefs({ theme: data.theme, language: data.language });
+      let next = data;
+      if (shouldAdoptBrowserTimeZone(data.timezone)) {
+        const timezone = detectTimeZone();
+        if (timezone && timezone !== data.timezone) {
+          const save = await fetch('/api/preferences', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ timezone }),
+          });
+          if (save.ok) next = await save.json();
+          else next = { ...data, timezone };
+        }
+      }
+      if (cancelled) return;
+      setPrefs(next);
+      writePrefs({ theme: next.theme, language: next.language });
     })();
 
     return () => {

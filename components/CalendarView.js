@@ -243,7 +243,7 @@ export default function CalendarView({ messages, onNewMessage }) {
         </div>
       )}
       <div className="calendar-detail-footer">
-        <button type="button" className="btn-primary" onClick={onNewMessage}>
+        <button type="button" className="btn-primary" data-tour="new-message" onClick={onNewMessage}>
           <Plus size={18} /> {t('agenda.newMessage')}
         </button>
       </div>
@@ -252,7 +252,7 @@ export default function CalendarView({ messages, onNewMessage }) {
 
   return (
     <div className="calendar-layout">
-      <div className="glass-panel calendar-panel" data-day-page={dayPageOpen ? 'true' : 'false'}>
+      <div className="glass-panel calendar-panel" data-tour="calendar" data-day-page={dayPageOpen ? 'true' : 'false'}>
         <div className="calendar-nav">
           <button onClick={goToPrev} className="nav-btn" aria-label={isWeekView ? t('agenda.prevWeek') : t('agenda.prevMonth')}>
             <ChevronLeft size={20} />
@@ -270,18 +270,6 @@ export default function CalendarView({ messages, onNewMessage }) {
           <button onClick={goToNext} className="nav-btn" aria-label={isWeekView ? t('agenda.nextWeek') : t('agenda.nextMonth')}>
             <ChevronRight size={20} />
           </button>
-        </div>
-
-        <div className="calendar-legend">
-          <span className="legend-item">
-            <span className="event-dot" data-status="pending" /> {t('agenda.legendPending')}
-          </span>
-          <span className="legend-item">
-            <span className="event-dot" data-status="sent" /> {t('agenda.legendSent')}
-          </span>
-          <span className="legend-item">
-            <span className="event-dot" data-status="failed" /> {t('agenda.legendFailed')}
-          </span>
         </div>
 
         {isWeekView ? (
@@ -382,6 +370,17 @@ export default function CalendarView({ messages, onNewMessage }) {
               month: t(`month.${todayParts.month}`),
             })}
           </button>
+          <div className="calendar-legend">
+            <span className="legend-item">
+              <span className="event-dot" data-status="pending" /> {t('agenda.legendPending')}
+            </span>
+            <span className="legend-item">
+              <span className="event-dot" data-status="sent" /> {t('agenda.legendSent')}
+            </span>
+            <span className="legend-item">
+              <span className="event-dot" data-status="failed" /> {t('agenda.legendFailed')}
+            </span>
+          </div>
         </div>
         {dayPageOpen ? (
           <div className="calendar-day-page">{dayDetail(true)}</div>
@@ -390,7 +389,7 @@ export default function CalendarView({ messages, onNewMessage }) {
 
       <div className="glass-panel calendar-detail-panel">{dayDetail(false)}</div>
       <div className="calendar-new-message-bar">
-        <button type="button" className="btn-primary" onClick={onNewMessage}>
+        <button type="button" className="btn-primary" data-tour="new-message" onClick={onNewMessage}>
           <Plus size={18} /> {t('agenda.newMessage')}
         </button>
       </div>

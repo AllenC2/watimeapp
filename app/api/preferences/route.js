@@ -40,6 +40,14 @@ export async function PUT(request) {
     const hourClock = isHourClock(body.hourClock) ? body.hourClock : user.hour_clock;
     const language = isLanguage(body.language) ? body.language : user.language;
     const logoDataUrl = body.logoDataUrl === undefined ? user.logo_data_url : String(body.logoDataUrl || '');
+    const welcomeSeenAt =
+      body.welcomeSeen === true && !user.welcome_seen_at
+        ? new Date().toISOString()
+        : user.welcome_seen_at;
+    const setupSeenAt =
+      body.setupSeen === true && !user.setup_seen_at
+        ? new Date().toISOString()
+        : user.setup_seen_at;
     let email = user.email;
     let emailVerifiedAt = user.email_verified_at;
     if (body.email !== undefined) {
@@ -52,9 +60,23 @@ export async function PUT(request) {
       await runQuery(
         `UPDATE users SET
           email = ?, theme = ?, agenda_view = ?, week_starts_on = ?, timezone = ?,
-          hour_clock = ?, language = ?, logo_data_url = ?, email_verified_at = ?
+          hour_clock = ?, language = ?, logo_data_url = ?, email_verified_at = ?,
+          welcome_seen_at = ?, setup_seen_at = ?
          WHERE id = ?`,
-        [email, theme, agendaView, weekStartsOn, timezone, hourClock, language, logoDataUrl, emailVerifiedAt, user.id]
+        [
+          email,
+          theme,
+          agendaView,
+          weekStartsOn,
+          timezone,
+          hourClock,
+          language,
+          logoDataUrl,
+          emailVerifiedAt,
+          welcomeSeenAt,
+          setupSeenAt,
+          user.id,
+        ]
       );
     } catch {
       return jsonError('auth.errorEmailTaken', 409);

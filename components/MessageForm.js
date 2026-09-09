@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { Send, Clock, Calendar, ImagePlus, X, FileText, ChevronLeft } from 'lucide-react';
-import { fromDateAndTime, isScheduledInPast, soonestScheduleParts } from '../lib/schedule-time';
+import { fromDateAndTime, isScheduledTooSoon, MIN_SCHEDULE_MINUTES, soonestScheduleParts } from '../lib/schedule-time';
 import { templateParagraphs } from '../lib/templates';
 import RecipientPicker from './RecipientPicker';
 import TimeField from './TimeField';
@@ -12,7 +12,7 @@ import { tApiError } from '../lib/i18n';
 export default function MessageForm({ onMessageScheduled, embedded = false }) {
   const { prefs, t } = usePreferences();
   const hour12 = prefs.hourClock === '12h';
-  const defaultWhen = () => soonestScheduleParts(new Date(), 10, prefs.timezone);
+  const defaultWhen = () => soonestScheduleParts(new Date(), MIN_SCHEDULE_MINUTES, prefs.timezone);
   const [recipient, setRecipient] = useState('');
   const [content, setContent] = useState('');
   const [intent, setIntent] = useState('schedule');
@@ -108,7 +108,7 @@ export default function MessageForm({ onMessageScheduled, embedded = false }) {
         return;
       }
       scheduled_for = fromDateAndTime(date, time);
-      if (isScheduledInPast(scheduled_for)) {
+      if (isScheduledTooSoon(scheduled_for, new Date(), prefs.timezone)) {
         setFormError(t('message.alertPast'));
         return;
       }

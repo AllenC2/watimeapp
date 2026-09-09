@@ -6,6 +6,7 @@ import { LogOut, Settings } from 'lucide-react';
 import WhatsAppStatusPill from './WhatsAppStatusPill';
 import IdentifierMenu from './IdentifierMenu';
 import { usePreferences } from './PreferencesProvider';
+import { useTour } from './TourProvider';
 
 function firstInitial(name) {
   const letter = String(name || '').trim().charAt(0);
@@ -14,15 +15,21 @@ function firstInitial(name) {
 
 export default function UserMenu() {
   const { prefs, t, logout } = usePreferences();
+  const { openAccountMenu } = useTour();
   const [open, setOpen] = useState(false);
   const rootRef = useRef(null);
 
   useEffect(() => {
-    if (!open) return undefined;
+    setOpen(Boolean(openAccountMenu));
+  }, [openAccountMenu]);
+
+  useEffect(() => {
+    if (!open || openAccountMenu) return undefined;
 
     const onPointerDown = (event) => {
       if (rootRef.current?.contains(event.target)) return;
       if (event.target.closest?.('.modal-overlay')) return;
+      if (event.target.closest?.('.tour-root')) return;
       setOpen(false);
     };
     const onKeyDown = (event) => {
@@ -35,11 +42,11 @@ export default function UserMenu() {
       document.removeEventListener('mousedown', onPointerDown);
       document.removeEventListener('keydown', onKeyDown);
     };
-  }, [open]);
+  }, [open, openAccountMenu]);
 
   return (
-    <div className="user-menu" ref={rootRef}>
-      <div className="user-menu-pill user-menu-pill--bar">
+    <div className="user-menu" ref={rootRef} data-tour="account">
+      <div className="user-menu-pill user-menu-pill--bar" data-tour="whatsapp">
         <WhatsAppStatusPill onOpenSession={() => setOpen(false)} />
       </div>
       <button
