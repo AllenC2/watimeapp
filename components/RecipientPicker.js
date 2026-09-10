@@ -29,7 +29,7 @@ export default function RecipientPicker({ id, value, onChange }) {
   const selected = useMemo(() => {
     const contact = contacts.find((item) => item.identifier === value);
     if (contact) return contact;
-    const channel = channels.find((item) => item.id === value);
+    const channel = channels.find((item) => item.id === value || item.jid === value);
     if (channel) return { name: channel.name, identifier: channel.id };
     return null;
   }, [contacts, channels, value]);
@@ -131,7 +131,7 @@ export default function RecipientPicker({ id, value, onChange }) {
     setOpen(false);
     setAdding(false);
     setError('');
-    onChange(channel.id);
+    onChange(channel.jid);
   };
 
   const selectContact = (contact) => {

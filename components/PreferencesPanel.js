@@ -917,8 +917,15 @@ export default function PreferencesPanel({ onTitleChange }) {
               className="prefs-about-logo"
               data-default="true"
             />
-            <p className="prefs-about-name"></p>
+            <p className="prefs-about-name">WATime</p>
             <p className="prefs-about-version">{t('prefs.about.version', { version: APP_VERSION })}</p>
+            <p className="prefs-about-credit">
+              {t('prefs.about.creditBefore')}{' '}
+              <a href="https://imallen.dev" target="_blank" rel="noopener noreferrer">
+                @imallendev
+              </a>
+            </p>
+            <p className="prefs-about-disclaimer">{t('prefs.about.disclaimer')}</p>
             <button
               type="button"
               className="prefs-about-link"

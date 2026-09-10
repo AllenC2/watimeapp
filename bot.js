@@ -155,6 +155,9 @@ function startScheduler() {
             console.log(`[Scheduler] Procesando mensaje ID ${msg.id} para ${msg.recipient}...`);
             
             let jid = msg.recipient.trim();
+            if (jid.startsWith('@') && !jid.includes('@newsletter') && !jid.includes('@g.us')) {
+              jid = `${jid.slice(1)}@newsletter`;
+            }
             let resultJid = jid;
 
             if (jid.includes('@newsletter') || jid.includes('@g.us')) {

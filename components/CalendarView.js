@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { ChevronLeft, ChevronRight, CheckCheck, Clock, Plus, XCircle } from 'lucide-react';
 import { civilDateInTimeZone, formatScheduledTime, parseScheduledDate, scheduledDateKey } from '../lib/schedule-time';
 import { usePreferences } from './PreferencesProvider';
@@ -75,6 +75,46 @@ function weekDays(monday) {
       key: formatDateKey(parts.year, parts.month, parts.day),
     };
   });
+}
+
+function NewMessageButton({ onNewMessage }) {
+  const { t } = usePreferences();
+  const [hint, setHint] = useState(false);
+  const timerRef = useRef(null);
+
+  useEffect(() => () => clearTimeout(timerRef.current), []);
+
+  const onClick = async () => {
+    let connected = false;
+    try {
+      const res = await fetch('/api/whatsapp/status', { cache: 'no-store' });
+      const data = await res.json().catch(() => ({}));
+      connected = Boolean(data.connected);
+    } catch {
+      connected = false;
+    }
+    if (connected) {
+      setHint(false);
+      onNewMessage();
+      return;
+    }
+    setHint(true);
+    clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => setHint(false), 4000);
+  };
+
+  return (
+    <div className="new-message-btn-wrap">
+      <button type="button" className="btn-primary" data-tour="new-message" onClick={onClick}>
+        <Plus size={18} /> {t('agenda.newMessage')}
+      </button>
+      {hint ? (
+        <span className="new-message-tooltip" role="status">
+          {t('agenda.connectWhatsappHint')}
+        </span>
+      ) : null}
+    </div>
+  );
 }
 
 export default function CalendarView({ messages, onNewMessage }) {
@@ -243,9 +283,7 @@ export default function CalendarView({ messages, onNewMessage }) {
         </div>
       )}
       <div className="calendar-detail-footer">
-        <button type="button" className="btn-primary" data-tour="new-message" onClick={onNewMessage}>
-          <Plus size={18} /> {t('agenda.newMessage')}
-        </button>
+        <NewMessageButton onNewMessage={onNewMessage} />
       </div>
     </>
   );
@@ -389,9 +427,7 @@ export default function CalendarView({ messages, onNewMessage }) {
 
       <div className="glass-panel calendar-detail-panel">{dayDetail(false)}</div>
       <div className="calendar-new-message-bar">
-        <button type="button" className="btn-primary" data-tour="new-message" onClick={onNewMessage}>
-          <Plus size={18} /> {t('agenda.newMessage')}
-        </button>
+        <NewMessageButton onNewMessage={onNewMessage} />
       </div>
     </div>
   );
