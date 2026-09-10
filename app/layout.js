@@ -12,7 +12,7 @@ export const metadata = {
   },
 };
 
-const THEME_BOOT = `(function(){try{var p=JSON.parse(localStorage.getItem('wp-panel-prefs')||'{}');var t=p.theme;if(t==='light'||t==='dark'||t==='marino'||t==='bosque'||t==='olivo'||t==='petalo')document.documentElement.setAttribute('data-theme',t);if(p.language==='en'||p.language==='es')document.documentElement.lang=p.language;}catch(e){}})();`;
+const THEME_BOOT = `(function(){try{var p=JSON.parse(localStorage.getItem('wp-panel-prefs')||'{}');var t=p.theme;var ok=t==='lima'||t==='light'||t==='dark'||t==='marino'||t==='bosque'||t==='petalo';document.documentElement.setAttribute('data-theme',ok?t:'lima');if(p.language==='en'||p.language==='es')document.documentElement.lang=p.language;}catch(e){document.documentElement.setAttribute('data-theme','lima');}})();`;
 
 export default function RootLayout({ children }) {
   return (

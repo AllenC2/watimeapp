@@ -36,9 +36,13 @@ export default function Home() {
     const onKeyDown = (e) => {
       if (e.key === 'Escape') setIsModalOpen(false);
     };
-
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
     document.addEventListener('keydown', onKeyDown);
-    return () => document.removeEventListener('keydown', onKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener('keydown', onKeyDown);
+    };
   }, [isModalOpen]);
 
   const handleMessageScheduled = () => {
@@ -54,9 +58,12 @@ export default function Home() {
       </main>
 
       {isModalOpen && (
-        <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
+        <div
+          className="modal-overlay modal-overlay--sheet modal-overlay--message"
+          onClick={() => setIsModalOpen(false)}
+        >
           <div
-            className="modal-panel"
+            className="modal-panel modal-panel--message"
             role="dialog"
             aria-modal="true"
             aria-labelledby="new-message-title"
