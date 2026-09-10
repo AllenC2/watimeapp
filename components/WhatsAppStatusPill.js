@@ -5,20 +5,7 @@ import { createPortal } from 'react-dom';
 import { Smartphone, X } from 'lucide-react';
 import { usePreferences } from './PreferencesProvider';
 import { tApiError } from '../lib/i18n';
-
-const EMPTY = {
-  state: 'offline',
-  phone: '',
-  phoneLabel: '',
-  platform: '',
-  platformLabel: '',
-  name: '',
-  connected: false,
-  connecting: false,
-  qrDataUrl: null,
-  hasSession: false,
-  error: '',
-};
+import { EMPTY, useWhatsAppStatus } from './WhatsAppStatusProvider';
 
 function platformText(platform, t) {
   switch (String(platform || '').toLowerCase()) {
@@ -38,61 +25,26 @@ function platformText(platform, t) {
 
 function stateText(status, t) {
   if (status.connected) return t('wa.connected');
-  if (status.connecting) return status.qrDataUrl ? t('wa.waitingQr') : t('wa.connecting');
+  if (status.qrDataUrl) return t('wa.waitingQr');
+  if (status.connecting) {
+    if (!status.hasSession && !status.phone) return t('wa.checking');
+    return t('wa.connecting');
+  }
   return t('wa.disconnected');
 }
 
 export default function WhatsAppStatusPill({ onOpenSession }) {
   const { t } = usePreferences();
-  const [status, setStatus] = useState(EMPTY);
+  const { status, applyStatus, readJson, beginUrgent, endUrgent } = useWhatsAppStatus();
   const [modal, setModal] = useState(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
-  const readJson = async (res) => {
-    const text = await res.text();
-    try {
-      return JSON.parse(text);
-    } catch {
-      throw new Error(
-        res.ok
-          ? t('wa.errorNotJson')
-          : t('wa.errorHttp', { status: res.status })
-      );
-    }
-  };
-
-  const load = async () => {
-    const res = await fetch('/api/whatsapp/status', { cache: 'no-store' });
-    const data = await readJson(res);
-    if (!res.ok) throw new Error(tApiError(t, data, 'wa.errorStatus'));
-    return data;
-  };
-
   useEffect(() => {
-    let cancelled = false;
-
-    const refresh = async () => {
-      try {
-        const data = await load();
-        if (!cancelled) {
-          setStatus((prev) => {
-            if (data.qrDataUrl) setError('');
-            return data;
-          });
-        }
-      } catch {
-        if (!cancelled) setStatus(EMPTY);
-      }
-    };
-
-    refresh();
-    const interval = setInterval(refresh, modal ? 800 : 5000);
-    return () => {
-      cancelled = true;
-      clearInterval(interval);
-    };
-  }, [modal]);
+    if (!modal) return undefined;
+    beginUrgent();
+    return () => endUrgent();
+  }, [modal, beginUrgent, endUrgent]);
 
   useEffect(() => {
     if (modal === 'connect' && status.connected) {
@@ -100,6 +52,10 @@ export default function WhatsAppStatusPill({ onOpenSession }) {
       setModal(null);
     }
   }, [modal, status.connected]);
+
+  useEffect(() => {
+    if (status.qrDataUrl) setError('');
+  }, [status.qrDataUrl]);
 
   const startConnect = async () => {
     setError('');
@@ -113,7 +69,7 @@ export default function WhatsAppStatusPill({ onOpenSession }) {
       });
       const data = await readJson(res);
       if (!res.ok) throw new Error(tApiError(t, data, 'wa.errorConnect'));
-      setStatus(data);
+      applyStatus(data);
       if (data.error && !data.qrDataUrl && !data.connected) {
         setError(data.error);
       }
@@ -131,7 +87,7 @@ export default function WhatsAppStatusPill({ onOpenSession }) {
       const res = await fetch('/api/whatsapp/logout', { method: 'POST' });
       const data = await readJson(res);
       if (!res.ok) throw new Error(tApiError(t, data, 'wa.errorLogout'));
-      setStatus({ ...EMPTY, ...data });
+      applyStatus({ ...EMPTY, ...data });
       setModal(null);
     } catch (err) {
       setError(err.message || t('wa.errorLogout'));
@@ -152,7 +108,7 @@ export default function WhatsAppStatusPill({ onOpenSession }) {
       });
       const connectData = await readJson(connectRes);
       if (!connectRes.ok) throw new Error(tApiError(t, connectData, 'wa.errorReconnect'));
-      setStatus(connectData);
+      applyStatus(connectData);
       if (connectData.error && !connectData.qrDataUrl && !connectData.connected) {
         setError(connectData.error);
       }
@@ -253,7 +209,7 @@ export default function WhatsAppStatusPill({ onOpenSession }) {
                   )}
                 </div>
                 {(error || status.error) && (
-                  <p className="session-modal-error">{error || status.error}</p>
+                  <p className="session-modal-error">{error || status.error}</p>}
                 )}
                 {!status.qrDataUrl && (
                   <div className="session-modal-actions">

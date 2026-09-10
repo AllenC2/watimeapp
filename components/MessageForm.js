@@ -145,7 +145,8 @@ export default function MessageForm({ onMessageScheduled, embedded = false }) {
       } else {
         const data = await res.json().catch(() => ({}));
         const fallback = intent === 'now' ? 'message.alertSend' : 'message.alertSchedule';
-        setFormError(data.error ? tApiError(t, data, fallback) : t(fallback));
+        const base = data.error ? tApiError(t, data, fallback) : t(fallback);
+        setFormError(data.reason ? `${base}: ${data.reason}` : base);
       }
     } catch (error) {
       console.error(error);

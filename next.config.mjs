@@ -7,7 +7,16 @@ const nextConfig = {
     'sqlite3',
     'ws',
     'whatsapp-rust-bridge',
+    'sharp',
   ],
+  async rewrites() {
+    return [
+      {
+        source: '/uploads/:userId/:filename',
+        destination: '/api/uploads/:userId/:filename',
+      },
+    ];
+  },
 };
 
 export default nextConfig;

@@ -2,15 +2,18 @@
 
 import { PreferencesProvider } from './PreferencesProvider';
 import { TourProvider } from './TourProvider';
+import { WhatsAppStatusProvider } from './WhatsAppStatusProvider';
 import WelcomeModal from './WelcomeModal';
 
 export default function AppProviders({ children }) {
   return (
     <PreferencesProvider>
-      <TourProvider>
-        {children}
-        <WelcomeModal />
-      </TourProvider>
+      <WhatsAppStatusProvider>
+        <TourProvider>
+          {children}
+          <WelcomeModal />
+        </TourProvider>
+      </WhatsAppStatusProvider>
     </PreferencesProvider>
   );
 }

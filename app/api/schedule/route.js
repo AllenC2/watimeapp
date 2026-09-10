@@ -7,6 +7,7 @@ import { AuthError, requireUser } from '../../../lib/auth';
 import { ApiError, jsonError } from '../../../lib/i18n/api';
 import { formatLocalDateTime, isScheduledTooSoon } from '../../../lib/schedule-time';
 import { sendMessageNow } from '../../../lib/whatsapp';
+import { absoluteUploadPath, parseUploadUrl, uploadsRoot } from '../../../lib/uploads';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -47,7 +48,7 @@ async function saveImage(userId, file) {
     throw new ApiError('errors.imageSize');
   }
 
-  const uploadsDir = path.join(process.cwd(), 'public', 'uploads', String(userId));
+  const uploadsDir = path.join(uploadsRoot(), String(userId));
   await mkdir(uploadsDir, { recursive: true });
 
   const filename = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}${extensionFor(type, file.name)}`;
@@ -55,18 +56,14 @@ async function saveImage(userId, file) {
   const buffer = Buffer.from(await file.arrayBuffer());
   await writeFile(filepath, buffer);
 
-  return `/uploads/${userId}/${filename}`;
+  return `/api/uploads/${userId}/${filename}`;
 }
 
 async function deleteMessageImage(userId, imageUrl) {
-  const relative = String(imageUrl || '').replace(/^\//, '');
-  const allowed = `uploads/${userId}/`;
-  if (!relative.startsWith(allowed)) return;
-
-  const uploadsDir = path.resolve(process.cwd(), 'public', 'uploads', String(userId));
-  const fullPath = path.resolve(process.cwd(), 'public', relative);
-  const prefix = `${uploadsDir}${path.sep}`;
-  if (fullPath !== uploadsDir && !fullPath.startsWith(prefix)) return;
+  const parsed = parseUploadUrl(imageUrl);
+  if (!parsed || Number(parsed.userId) !== Number(userId)) return;
+  const fullPath = absoluteUploadPath(imageUrl);
+  if (!fullPath) return;
 
   try {
     await unlink(fullPath);
@@ -154,7 +151,9 @@ export async function POST(request) {
           [msg.id, user.id]
         );
         if (error.code === 'WHATSAPP_OFFLINE') return jsonError('errors.whatsappOffline', 409);
-        return jsonError('errors.sendFailed', 502);
+        return jsonError('errors.sendFailed', 502, {
+          reason: String(error.message || '').slice(0, 240),
+        });
       }
     }
 
