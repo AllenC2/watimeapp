@@ -209,7 +209,7 @@ export default function WhatsAppStatusPill({ onOpenSession }) {
                   )}
                 </div>
                 {(error || status.error) && (
-                  <p className="session-modal-error">{error || status.error}</p>}
+                  <p className="session-modal-error">{error || status.error}</p>
                 )}
                 {!status.qrDataUrl && (
                   <div className="session-modal-actions">

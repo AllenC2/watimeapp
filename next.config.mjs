@@ -9,6 +9,9 @@ const nextConfig = {
     'whatsapp-rust-bridge',
     'sharp',
   ],
+  outputFileTracingExcludes: {
+    '*': ['auth_info_baileys/**', 'public/uploads/**', 'whatsapp-status/**'],
+  },
   async rewrites() {
     return [
       {
