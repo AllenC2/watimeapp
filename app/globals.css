@@ -175,6 +175,8 @@ body {
 
 .dashboard-container--agenda {
   min-height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
 }
 
 /* Topbar */
@@ -406,7 +408,10 @@ html[data-theme="lima"] .topbar-logo[data-default="true"] {
 }
 
 .main-content--agenda {
-  overflow: visible;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  padding-bottom: 1.5rem;
 }
 
 header h1 {
@@ -1815,12 +1820,15 @@ html[data-theme="lima"] .btn-primary:hover:not(:disabled) {
   display: flex;
   gap: 2rem;
   align-items: stretch;
+  flex: 1;
+  min-height: 0;
 }
 
 .calendar-panel {
   flex: 1;
   min-width: 0;
-  overflow: visible;
+  min-height: 0;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   height: auto;
@@ -1832,6 +1840,7 @@ html[data-theme="lima"] .btn-primary:hover:not(:disabled) {
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
+  min-height: 0;
   overflow: hidden;
   padding: 0;
 }
@@ -1843,6 +1852,7 @@ html[data-theme="lima"] .btn-primary:hover:not(:disabled) {
   justify-content: space-between;
   gap: 1rem;
   margin-bottom: 1.5rem;
+  flex-shrink: 0;
 }
 
 .calendar-title {
@@ -1901,6 +1911,7 @@ html[data-theme="lima"] .btn-primary:hover:not(:disabled) {
   justify-content: space-between;
   gap: 1rem;
   margin-top: 1rem;
+  flex-shrink: 0;
 }
 
 .calendar-legend {
@@ -1996,9 +2007,10 @@ html[data-theme="lima"] .btn-primary:hover:not(:disabled) {
 /* Event Dots */
 .day-events {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 3px;
   align-items: center;
+  min-width: 0;
 }
 
 .event-dot {
@@ -2006,6 +2018,7 @@ html[data-theme="lima"] .btn-primary:hover:not(:disabled) {
   height: 8px;
   border-radius: 50%;
   display: inline-block;
+  flex-shrink: 0;
 }
 
 .event-dot[data-status="pending"] {
@@ -2024,6 +2037,8 @@ html[data-theme="lima"] .btn-primary:hover:not(:disabled) {
   font-size: 0.7rem;
   color: var(--text-muted);
   margin-left: 2px;
+  flex-shrink: 0;
+  font-weight: 600;
 }
 
 .week-grid {
@@ -2209,6 +2224,8 @@ html[data-theme="lima"] .btn-primary:hover:not(:disabled) {
   min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
   display: flex;
   flex-direction: column;
   gap: 0.45rem;
@@ -2918,20 +2935,24 @@ html[data-theme="lima"] .btn-primary:hover:not(:disabled) {
 @media (max-width: 1100px) {
   .dashboard-container--agenda {
     height: auto;
+    min-height: 100dvh;
     overflow: visible;
   }
 
   .main-content--agenda {
     overflow: visible;
+    min-height: 0;
   }
 
   .calendar-layout {
     flex-direction: column;
+    flex: none;
   }
 
   .calendar-detail-panel {
     width: 100%;
-    height: 420px;
+    height: min(420px, 55dvh);
+    max-height: min(420px, 55dvh);
   }
 
   .calendar-cell {
@@ -2946,6 +2967,8 @@ html[data-theme="lima"] .btn-primary:hover:not(:disabled) {
 
   .dashboard-container--agenda {
     --page-pad-x: 0.85rem;
+    height: 100dvh;
+    overflow: hidden;
   }
 
   .topbar {
@@ -2983,6 +3006,7 @@ html[data-theme="lima"] .btn-primary:hover:not(:disabled) {
   .calendar-layout {
     gap: 0;
     flex: 1;
+    min-height: 0;
   }
 
   .calendar-panel.glass-panel {
@@ -3015,7 +3039,10 @@ html[data-theme="lima"] .btn-primary:hover:not(:disabled) {
   .calendar-day-page {
     display: flex;
     flex-direction: column;
-    min-height: calc(100dvh - var(--topbar-height) - 1.25rem);
+    flex: 1;
+    height: 100%;
+    max-height: 100%;
+    min-height: 0;
     margin: 0;
     overflow: hidden;
   }
@@ -3063,9 +3090,20 @@ html[data-theme="lima"] .btn-primary:hover:not(:disabled) {
     padding-bottom: 5.5rem;
   }
 
+  .calendar-panel[data-day-page="true"] {
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+  }
+
   .calendar-day-page .chat-thread,
   .calendar-day-page .placeholder.chat-empty {
     flex: 1;
+    min-height: 0;
+  }
+
+  .calendar-day-page .chat-thread {
+    overflow-y: auto;
   }
 
   .main-content {
@@ -3075,6 +3113,9 @@ html[data-theme="lima"] .btn-primary:hover:not(:disabled) {
   .main-content.main-content--agenda {
     padding: 1.5rem var(--page-pad-x) 1.25rem;
     gap: 0;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
   }
 
   .settings-grid {

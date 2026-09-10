@@ -24,10 +24,22 @@ function extensionFor(type, originalName) {
   return '.jpg';
 }
 
+function mimeFromUpload(file) {
+  const type = String(file?.type || '').toLowerCase();
+  if (ALLOWED_TYPES.has(type)) return type;
+  const ext = path.extname(file?.name || '').toLowerCase();
+  if (ext === '.jpg' || ext === '.jpeg') return 'image/jpeg';
+  if (ext === '.png') return 'image/png';
+  if (ext === '.webp') return 'image/webp';
+  if (ext === '.gif') return 'image/gif';
+  return type;
+}
+
 async function saveImage(userId, file) {
   if (!file || typeof file === 'string' || file.size === 0) return null;
 
-  if (!ALLOWED_TYPES.has(file.type)) {
+  const type = mimeFromUpload(file);
+  if (!ALLOWED_TYPES.has(type)) {
     throw new ApiError('errors.imageType');
   }
 
@@ -38,7 +50,7 @@ async function saveImage(userId, file) {
   const uploadsDir = path.join(process.cwd(), 'public', 'uploads', String(userId));
   await mkdir(uploadsDir, { recursive: true });
 
-  const filename = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}${extensionFor(file.type, file.name)}`;
+  const filename = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}${extensionFor(type, file.name)}`;
   const filepath = path.join(uploadsDir, filename);
   const buffer = Buffer.from(await file.arrayBuffer());
   await writeFile(filepath, buffer);
@@ -136,6 +148,7 @@ export async function POST(request) {
           [account.phone || '', account.name || '', msg.id, user.id]
         );
       } catch (error) {
+        console.error(`[schedule] Error enviando mensaje ${msg.id}:`, error);
         await runQuery(
           `UPDATE scheduled_messages SET status = 'failed' WHERE id = ? AND user_id = ?`,
           [msg.id, user.id]

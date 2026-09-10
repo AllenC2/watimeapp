@@ -369,9 +369,12 @@ export default function CalendarView({ messages, onNewMessage }) {
                 }
 
                 const dateKey = formatDateKey(currentYear, currentMonth, day);
-                const dayMsgs = messagesByDate[dateKey] || [];
+                const dayMsgs = [...(messagesByDate[dateKey] || [])].sort(
+                  (a, b) => parseScheduledDate(a.scheduled_for) - parseScheduledDate(b.scheduled_for)
+                );
                 const isTodayCell = isToday(currentYear, currentMonth, day);
                 const isSelected = selectedDay === day;
+                const visibleDots = dayMsgs.slice(-4);
 
                 return (
                   <div
@@ -382,7 +385,7 @@ export default function CalendarView({ messages, onNewMessage }) {
                     <span className="day-number">{day}</span>
                     {dayMsgs.length > 0 && (
                       <div className="day-events">
-                        {dayMsgs.slice(0, 4).map((msg) => (
+                        {visibleDots.map((msg) => (
                           <span
                             key={msg.id}
                             className="event-dot"

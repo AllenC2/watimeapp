@@ -342,7 +342,14 @@ export default function RecipientPicker({ id, value, onChange }) {
                       onClick={() => selectChannel(channel)}
                     >
                       <span>{channel.name}</span>
-                      <small>{channel.id}</small>
+                      <small>
+                        {channel.id}
+                        {channel.role === 'OWNER'
+                          ? ` · ${t('picker.roleOwner')}`
+                          : channel.role === 'ADMIN'
+                            ? ` · ${t('picker.roleAdmin')}`
+                            : ''}
+                      </small>
                     </button>
                   ))}
                 </div>
