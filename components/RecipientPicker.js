@@ -14,6 +14,7 @@ import { tApiError } from '../lib/i18n';
 export default function RecipientPicker({ id, value, onChange }) {
   const { t, locale } = usePreferences();
   const [contacts, setContacts] = useState([]);
+  const [channels, setChannels] = useState([]);
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
   const [adding, setAdding] = useState(false);
@@ -25,10 +26,13 @@ export default function RecipientPicker({ id, value, onChange }) {
   const nameInputRef = useRef(null);
   const inputRef = useRef(null);
 
-  const selected = useMemo(
-    () => contacts.find((contact) => contact.identifier === value) || null,
-    [contacts, value]
-  );
+  const selected = useMemo(() => {
+    const contact = contacts.find((item) => item.identifier === value);
+    if (contact) return contact;
+    const channel = channels.find((item) => item.id === value);
+    if (channel) return { name: channel.name, identifier: channel.id };
+    return null;
+  }, [contacts, channels, value]);
 
   const loadContacts = async () => {
     const res = await fetch('/api/contacts', { cache: 'no-store' });
@@ -36,9 +40,23 @@ export default function RecipientPicker({ id, value, onChange }) {
     if (res.ok && Array.isArray(data)) setContacts(data);
   };
 
+  const loadChannels = async () => {
+    const res = await fetch('/api/whatsapp/last-channel', { cache: 'no-store' });
+    const data = await res.json().catch(() => ({}));
+    if (res.ok && Array.isArray(data.channels)) setChannels(data.channels);
+    else setChannels([]);
+  };
+
   useEffect(() => {
     loadContacts().catch(() => {});
+    loadChannels().catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    loadChannels().catch(() => {});
+    return undefined;
+  }, [open]);
 
   useEffect(() => {
     if (selected && !open && !adding) setQuery(selected.name);
@@ -69,14 +87,32 @@ export default function RecipientPicker({ id, value, onChange }) {
     active?.scrollIntoView({ block: 'nearest' });
   }, [highlight, open]);
 
+  const channelMatches = useMemo(
+    () =>
+      channels.filter((channel) =>
+        contactMatches(
+          { name: channel.name, identifier: channel.id, search_key: String(channel.id || '').toLowerCase() },
+          query
+        )
+      ),
+    [channels, query]
+  );
+
   const matches = useMemo(
     () => contacts.filter((contact) => contactMatches(contact, query)),
     [contacts, query]
   );
 
-  const canAdd =
-    looksLikeIdentifier(query) &&
-    !contacts.some((contact) => isExactContactMatch(contact, query));
+  const knownExact = (nextQuery) =>
+    contacts.some((contact) => isExactContactMatch(contact, nextQuery)) ||
+    channels.some((channel) =>
+      isExactContactMatch(
+        { identifier: channel.id, search_key: String(channel.id || '').toLowerCase() },
+        nextQuery
+      )
+    );
+
+  const canAdd = looksLikeIdentifier(query) && !knownExact(query);
 
   const emitIdentifier = (nextQuery, contact = null) => {
     if (contact) {
@@ -88,6 +124,14 @@ export default function RecipientPicker({ id, value, onChange }) {
       return;
     }
     onChange('');
+  };
+
+  const selectChannel = (channel) => {
+    setQuery(channel.name);
+    setOpen(false);
+    setAdding(false);
+    setError('');
+    onChange(channel.id);
   };
 
   const selectContact = (contact) => {
@@ -113,8 +157,15 @@ export default function RecipientPicker({ id, value, onChange }) {
     setAdding(false);
     setError('');
     setHighlight(0);
-    const exact = contacts.find((contact) => isExactContactMatch(contact, nextQuery));
-    emitIdentifier(nextQuery, exact || null);
+    const exact =
+      contacts.find((contact) => isExactContactMatch(contact, nextQuery)) ||
+      channels.find((channel) =>
+        isExactContactMatch(
+          { identifier: channel.id, search_key: String(channel.id || '').toLowerCase() },
+          nextQuery
+        )
+      );
+    emitIdentifier(nextQuery, exact ? { identifier: exact.identifier || exact.id } : null);
   };
 
   const startAdd = () => {
@@ -160,8 +211,10 @@ export default function RecipientPicker({ id, value, onChange }) {
     }
   };
 
-  const showMenu = !selected && open && (adding || canAdd || matches.length > 0 || query.trim());
+  const showMenu =
+    !selected && open && (adding || canAdd || matches.length > 0 || channelMatches.length > 0 || query.trim());
   const addOffset = canAdd || adding ? 1 : 0;
+  const channelOffset = addOffset + channelMatches.length;
 
   const onKeyDown = (event) => {
     if (!showMenu && (event.key === 'ArrowDown' || event.key === 'Enter')) {
@@ -170,7 +223,7 @@ export default function RecipientPicker({ id, value, onChange }) {
     }
     if (!showMenu) return;
 
-    const optionCount = addOffset + matches.length;
+    const optionCount = channelOffset + matches.length;
     if (event.key === 'ArrowDown') {
       event.preventDefault();
       setHighlight((index) => (index + 1) % Math.max(optionCount, 1));
@@ -180,8 +233,11 @@ export default function RecipientPicker({ id, value, onChange }) {
     } else if (event.key === 'Enter' && !adding) {
       event.preventDefault();
       if (canAdd && highlight === 0) startAdd();
-      else {
-        const contact = matches[highlight - addOffset];
+      else if (highlight < channelOffset) {
+        const channel = channelMatches[highlight - addOffset];
+        if (channel) selectChannel(channel);
+      } else {
+        const contact = matches[highlight - channelOffset];
         if (contact) selectContact(contact);
       }
     } else if (event.key === 'Escape') {
@@ -271,17 +327,40 @@ export default function RecipientPicker({ id, value, onChange }) {
                   {t('picker.addQuery', { query: query.trim() })}
                 </button>
               )}
-              {matches.length > 0 && (
+              {channelMatches.length > 0 && (
                 <div className="recipient-picker-options">
-                  {matches.map((contact, index) => (
+                  <p className="recipient-picker-heading">{t('picker.channels')}</p>
+                  {channelMatches.map((channel, index) => (
                     <button
-                      key={contact.id}
+                      key={channel.jid}
                       type="button"
                       className="recipient-picker-option"
                       role="option"
                       aria-selected={highlight === index + addOffset}
                       data-active={highlight === index + addOffset}
                       onMouseEnter={() => setHighlight(index + addOffset)}
+                      onClick={() => selectChannel(channel)}
+                    >
+                      <span>{channel.name}</span>
+                      <small>{channel.id}</small>
+                    </button>
+                  ))}
+                </div>
+              )}
+              {matches.length > 0 && (
+                <div className="recipient-picker-options">
+                  {channelMatches.length > 0 ? (
+                    <p className="recipient-picker-heading">{t('picker.contacts')}</p>
+                  ) : null}
+                  {matches.map((contact, index) => (
+                    <button
+                      key={contact.id}
+                      type="button"
+                      className="recipient-picker-option"
+                      role="option"
+                      aria-selected={highlight === index + channelOffset}
+                      data-active={highlight === index + channelOffset}
+                      onMouseEnter={() => setHighlight(index + channelOffset)}
                       onClick={() => selectContact(contact)}
                     >
                       <span>{contact.name}</span>
@@ -290,7 +369,7 @@ export default function RecipientPicker({ id, value, onChange }) {
                   ))}
                 </div>
               )}
-              {!canAdd && matches.length === 0 && (
+              {!canAdd && matches.length === 0 && channelMatches.length === 0 && (
                 <p className="recipient-picker-empty">
                   {query.trim()
                     ? t('picker.emptySearch')

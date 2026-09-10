@@ -35,8 +35,8 @@ export async function POST(request) {
       result = await runQuery(
         `INSERT INTO users (
           username, email, password_hash, theme, agenda_view, week_starts_on,
-          timezone, hour_clock, language, logo_data_url
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          timezone, hour_clock, language, logo_data_url, terms_accepted_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           parsed.username,
           parsed.email,
@@ -48,6 +48,7 @@ export async function POST(request) {
           defaults.hour_clock,
           defaults.language,
           defaults.logo_data_url,
+          new Date().toISOString(),
         ]
       );
     } catch (error) {

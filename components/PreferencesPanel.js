@@ -1,18 +1,21 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { CalendarDays, ChevronLeft, ChevronRight, Clock, Download, Globe, ImagePlus, KeyRound, Languages, MailCheck, Palette, Shield, SlidersHorizontal, UserRound, X } from 'lucide-react';
-import { AGENDA_VIEWS, detectTimeZone, HOUR_CLOCKS, LANGUAGES, THEMES, timeZoneMeta, WEEK_STARTS } from '../lib/preferences';
+import { CalendarDays, ChevronLeft, ChevronRight, Clock, Download, Globe, ImagePlus, Info, KeyRound, Languages, MailCheck, Palette, Shield, SlidersHorizontal, UserRound, X } from 'lucide-react';
+import { AGENDA_VIEWS, APP_VERSION, DEFAULT_LOGO_SRC, detectTimeZone, HOUR_CLOCKS, LANGUAGES, THEMES, timeZoneMeta, WEEK_STARTS } from '../lib/preferences';
 import { messages, tApiError, translate } from '../lib/i18n';
 import { passwordRuleError } from '../lib/password-rules';
 import { usePreferences } from './PreferencesProvider';
 import { useTour } from './TourProvider';
+import PrivacyNotice from './PrivacyNotice';
+import TermsNotice from './TermsNotice';
 
 const MENU_DEFS = [
   { id: 'general', titleKey: 'prefs.menu.general', descKey: 'prefs.menu.generalDesc', icon: SlidersHorizontal },
   { id: 'perfil', titleKey: 'prefs.menu.profile', descKey: 'prefs.menu.profileDesc', icon: UserRound },
   { id: 'estilos', titleKey: 'prefs.menu.styles', descKey: 'prefs.menu.stylesDesc', icon: Palette },
   { id: 'privacidad', titleKey: 'prefs.menu.privacy', descKey: 'prefs.menu.privacyDesc', icon: Shield },
+  { id: 'acerca', titleKey: 'prefs.menu.about', descKey: 'prefs.menu.aboutDesc', icon: Info },
 ];
 
 function parseExpiresAt(value) {
@@ -64,6 +67,8 @@ export default function PreferencesPanel({ onTitleChange }) {
     if (!isMobile || nextOnList) return t('prefs.back');
     if (nextSubpage === 'password') return t('prefs.passwordTitle');
     if (nextSubpage === 'verify') return t('prefs.verifyEmailTitle');
+    if (nextSubpage === 'aviso') return t('prefs.about.privacyTitle');
+    if (nextSubpage === 'terminos') return t('prefs.about.termsTitle');
     return menus.find((entry) => entry.id === nextMenu)?.title || t('prefs.back');
   };
 
@@ -149,6 +154,14 @@ export default function PreferencesPanel({ onTitleChange }) {
     }
     if (subpage === 'verify') {
       onTitleChange(t('prefs.verifyEmailTitle'));
+      return;
+    }
+    if (subpage === 'aviso') {
+      onTitleChange(t('prefs.about.privacyTitle'));
+      return;
+    }
+    if (subpage === 'terminos') {
+      onTitleChange(t('prefs.about.termsTitle'));
       return;
     }
     const item = MENU_DEFS.find((entry) => entry.id === menu);
@@ -368,7 +381,7 @@ export default function PreferencesPanel({ onTitleChange }) {
       </nav>
 
       <div className="prefs-content">
-        {isMobile && subpage !== 'password' && subpage !== 'verify' ? (
+        {isMobile && subpage !== 'password' && subpage !== 'verify' && subpage !== 'aviso' && subpage !== 'terminos' ? (
           <button type="button" className="prefs-back prefs-back--menus" onClick={backToList}>
             <ChevronLeft size={16} />
             {t('prefs.back')}
@@ -863,6 +876,69 @@ export default function PreferencesPanel({ onTitleChange }) {
             )}
             {error && <p className="prefs-error">{error}</p>}
             {message && <p className="prefs-ok">{message}</p>}
+          </div>
+        ) : menu === 'acerca' && subpage === 'aviso' ? (
+          <div className="prefs-form">
+            <button
+              type="button"
+              className="prefs-back"
+              onClick={() => {
+                setSubpage(null);
+                onTitleChange?.(titleFor('acerca', null, onList));
+              }}
+            >
+              <ChevronLeft size={16} />
+              {t('prefs.menu.about')}
+            </button>
+            <h3>{t('prefs.about.privacyTitle')}</h3>
+            <PrivacyNotice language={prefs.language} />
+          </div>
+        ) : menu === 'acerca' && subpage === 'terminos' ? (
+          <div className="prefs-form">
+            <button
+              type="button"
+              className="prefs-back"
+              onClick={() => {
+                setSubpage(null);
+                onTitleChange?.(titleFor('acerca', null, onList));
+              }}
+            >
+              <ChevronLeft size={16} />
+              {t('prefs.menu.about')}
+            </button>
+            <h3>{t('prefs.about.termsTitle')}</h3>
+            <TermsNotice language={prefs.language} />
+          </div>
+        ) : menu === 'acerca' ? (
+          <div className="prefs-form prefs-about">
+            <img
+              src={DEFAULT_LOGO_SRC}
+              alt={t('brand.alt')}
+              className="prefs-about-logo"
+              data-default="true"
+            />
+            <p className="prefs-about-name"></p>
+            <p className="prefs-about-version">{t('prefs.about.version', { version: APP_VERSION })}</p>
+            <button
+              type="button"
+              className="prefs-about-link"
+              onClick={() => {
+                setSubpage('terminos');
+                onTitleChange?.(titleFor('acerca', 'terminos', onList));
+              }}
+            >
+              {t('prefs.about.termsLink')}
+            </button>
+            <button
+              type="button"
+              className="prefs-about-link"
+              onClick={() => {
+                setSubpage('aviso');
+                onTitleChange?.(titleFor('acerca', 'aviso', onList));
+              }}
+            >
+              {t('prefs.about.privacyLink')}
+            </button>
           </div>
         ) : null}
       </div>

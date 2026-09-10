@@ -637,6 +637,8 @@ header p {
 
 .prefs-content {
   min-width: 0;
+  overflow: auto;
+  max-height: min(70vh, 640px);
 }
 
 .prefs-form {
@@ -931,6 +933,82 @@ header p {
 
 .prefs-tour-btn:hover {
   background: var(--hover-bg);
+}
+
+.prefs-about {
+  align-items: flex-start;
+  padding-top: 0.35rem;
+}
+
+.prefs-about-logo {
+  height: 56px;
+  width: auto;
+  max-width: 220px;
+  object-fit: contain;
+  display: block;
+}
+
+html[data-theme="light"] .prefs-about-logo[data-default="true"],
+html[data-theme="petalo"] .prefs-about-logo[data-default="true"] {
+  filter: invert(1);
+}
+
+.prefs-about-name {
+  margin: 0.35rem 0 0;
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.prefs-about-version {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.prefs-about-link {
+  margin-top: 0.5rem;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--primary-color);
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+  cursor: pointer;
+}
+
+.prefs-about-link:hover {
+  color: var(--text-main);
+}
+
+.prefs-aviso {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.prefs-aviso-updated {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.prefs-aviso h4 {
+  margin: 0 0 0.35rem;
+  font-size: 0.92rem;
+  font-weight: 650;
+}
+
+.prefs-aviso p {
+  margin: 0 0 0.45rem;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  line-height: 1.5;
+  font-weight: 400;
 }
 
 .prefs-logo {
@@ -1413,6 +1491,16 @@ input:focus, textarea:focus {
   padding: 0.85rem 0.95rem;
   color: var(--text-muted);
   font-size: 0.88rem;
+}
+
+.recipient-picker-heading {
+  margin: 0;
+  padding: 0.55rem 0.95rem 0.2rem;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
 .recipient-picker-add-form {
@@ -2701,73 +2789,6 @@ input:focus, textarea:focus {
   padding: 0.55rem 0.95rem;
 }
 
-.identifier-id {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-top: 0.35rem;
-  padding: 0.85rem 1rem;
-  border-radius: 12px;
-  background: color-mix(in srgb, var(--text-main) 6%, transparent);
-}
-
-.identifier-list {
-  list-style: none;
-  margin: 0.5rem 0 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.45rem;
-  max-height: min(50vh, 360px);
-  overflow: auto;
-}
-
-.identifier-list .identifier-id {
-  margin-top: 0;
-}
-
-.identifier-copy-block {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-}
-
-.identifier-copy-block strong {
-  font-size: 0.92rem;
-}
-
-.identifier-id code {
-  flex: 1;
-  font-size: 0.95rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  word-break: break-all;
-}
-
-.identifier-role {
-  color: var(--text-muted);
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
-.identifier-jid {
-  margin-top: 0.65rem;
-  color: var(--text-muted);
-  font-size: 0.82rem;
-  word-break: break-all;
-}
-
-.identifier-empty {
-  margin-top: 0.35rem;
-  color: var(--text-muted);
-}
-
-.identifier-hint {
-  white-space: pre-line;
-}
-
 .btn-danger {
   background: #dc2626;
   color: #fff;
@@ -3236,4 +3257,44 @@ html[data-theme="petalo"] .auth-logo[data-default="true"] {
 .auth-resend:disabled {
   opacity: 0.7;
   cursor: not-allowed;
+}
+
+.auth-legal {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.auth-legal input {
+  margin-top: 0.2rem;
+  flex-shrink: 0;
+  accent-color: var(--primary-color);
+}
+
+.auth-legal label {
+  cursor: pointer;
+}
+
+.auth-legal-link {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--primary-color);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+  cursor: pointer;
+}
+
+.auth-legal-link:hover {
+  color: var(--text-main);
+}
+
+.modal-panel--legal {
+  width: min(640px, 100%);
+  max-height: min(80vh, 720px);
 }

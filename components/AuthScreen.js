@@ -1,10 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { X } from 'lucide-react';
 import { usePreferences } from './PreferencesProvider';
 import { DEFAULT_LOGO_SRC } from '../lib/preferences';
 import { tApiError } from '../lib/i18n';
 import { passwordRuleError, passwordStrengthLevel } from '../lib/password-rules';
+import PrivacyNotice from './PrivacyNotice';
+import TermsNotice from './TermsNotice';
 
 function parseExpiresAt(value) {
   const ms = new Date(value || '').getTime();
@@ -21,7 +24,7 @@ function formatRemain(ms) {
 const STRENGTH_KEYS = ['', 'auth.passwordStrengthWeak', 'auth.passwordStrengthFair', 'auth.passwordStrengthGood', 'auth.passwordStrengthStrong'];
 
 export default function AuthScreen({ initialMode = 'login' }) {
-  const { t } = usePreferences();
+  const { t, prefs } = usePreferences();
   const [mode, setMode] = useState(initialMode === 'register' ? 'register' : 'login');
   const isRegister = mode === 'register';
   const isVerify = mode === 'verify';
@@ -31,6 +34,8 @@ export default function AuthScreen({ initialMode = 'login' }) {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [registerPassword, setRegisterPassword] = useState('');
+  const [acceptTerms, setAcceptTerms] = useState(false);
+  const [legalDoc, setLegalDoc] = useState(null);
   const strengthLevel = isRegister && !isVerify ? passwordStrengthLevel(registerPassword) : 0;
 
   useEffect(() => {
@@ -85,6 +90,7 @@ export default function AuthScreen({ initialMode = 'login' }) {
             email: String(form.get('email') || ''),
             password: String(form.get('password') || ''),
             confirmPassword: String(form.get('confirmPassword') || ''),
+            acceptTerms,
           }
         : {
             identifier: String(form.get('identifier') || ''),
@@ -92,6 +98,10 @@ export default function AuthScreen({ initialMode = 'login' }) {
           };
 
       if (isRegister) {
+        if (!acceptTerms) {
+          setError(t('auth.errorAcceptLegal'));
+          return;
+        }
         const passwordError = passwordRuleError(payload.password);
         if (passwordError) {
           setError(t(passwordError));
@@ -167,6 +177,8 @@ export default function AuthScreen({ initialMode = 'login' }) {
                 setMode('login');
                 setError('');
                 setRegisterPassword('');
+                setAcceptTerms(false);
+                setLegalDoc(null);
               }}
             >
               {t('auth.login')}
@@ -180,6 +192,8 @@ export default function AuthScreen({ initialMode = 'login' }) {
                 setMode('register');
                 setError('');
                 setRegisterPassword('');
+                setAcceptTerms(false);
+                setLegalDoc(null);
               }}
             >
               {t('auth.register')}
@@ -308,6 +322,42 @@ export default function AuthScreen({ initialMode = 'login' }) {
               />
             </div>
           ) : null}
+          {isRegister && !isVerify ? (
+            <div className="auth-legal">
+              <input
+                id="auth-accept-terms"
+                type="checkbox"
+                required
+                checked={acceptTerms}
+                onChange={(event) => {
+                  setAcceptTerms(event.target.checked);
+                  if (event.target.checked) setError('');
+                }}
+              />
+              <span>
+                <label htmlFor="auth-accept-terms">{t('auth.acceptLegalPrefix')}</label>
+                {' '}
+                <button
+                  type="button"
+                  className="auth-legal-link"
+                  onClick={() => setLegalDoc('aviso')}
+                >
+                  {t('prefs.about.privacyLink')}
+                </button>
+                {' '}
+                <label htmlFor="auth-accept-terms">{t('auth.acceptLegalAnd')}</label>
+                {' '}
+                <button
+                  type="button"
+                  className="auth-legal-link"
+                  onClick={() => setLegalDoc('terminos')}
+                >
+                  {t('prefs.about.termsLink')}
+                </button>
+                .
+              </span>
+            </div>
+          ) : null}
           {error ? <p className="prefs-error">{error}</p> : null}
           <button type="submit" className="btn-primary" disabled={busy}>
             {isVerify
@@ -323,6 +373,39 @@ export default function AuthScreen({ initialMode = 'login' }) {
           ) : null}
         </form>
       </div>
+      {legalDoc ? (
+        <div
+          className="modal-overlay"
+          onClick={() => setLegalDoc(null)}
+        >
+          <div
+            className="modal-panel modal-panel--legal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="auth-legal-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="modal-header">
+              <h2 id="auth-legal-title">
+                {legalDoc === 'aviso' ? t('prefs.about.privacyTitle') : t('prefs.about.termsTitle')}
+              </h2>
+              <button
+                type="button"
+                className="nav-btn"
+                aria-label={t('common.close')}
+                onClick={() => setLegalDoc(null)}
+              >
+                <X size={18} />
+              </button>
+            </div>
+            {legalDoc === 'aviso' ? (
+              <PrivacyNotice language={prefs.language} />
+            ) : (
+              <TermsNotice language={prefs.language} />
+            )}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

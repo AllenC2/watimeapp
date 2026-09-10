@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { LogOut, Settings } from 'lucide-react';
 import WhatsAppStatusPill from './WhatsAppStatusPill';
-import IdentifierMenu from './IdentifierMenu';
 import { usePreferences } from './PreferencesProvider';
 import { useTour } from './TourProvider';
 
@@ -63,7 +62,6 @@ export default function UserMenu() {
         <div className="user-menu-pill user-menu-pill--menu">
           <WhatsAppStatusPill onOpenSession={() => setOpen(false)} />
         </div>
-        <IdentifierMenu onOpen={() => setOpen(false)} />
         <Link
           href="/configuracion"
           className="user-menu-item"
