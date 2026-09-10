@@ -1,10 +1,59 @@
 'use client';
 
-import { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo, useEffect, useLayoutEffect, useRef } from 'react';
 import { ChevronLeft, ChevronRight, CheckCheck, Clock, Plus, XCircle } from 'lucide-react';
 import { civilDateInTimeZone, formatScheduledTime, parseScheduledDate, scheduledDateKey } from '../lib/schedule-time';
 import { usePreferences } from './PreferencesProvider';
 import { whatsappAccountLabel } from '../lib/whatsapp-label';
+
+function ChatThread({ messages, t, timeZone, hour12, getStatusIcon, getStatusText }) {
+  const ref = useRef(null);
+
+  const scrollToEnd = () => {
+    const el = ref.current;
+    if (!el) return;
+    el.scrollTop = el.scrollHeight;
+  };
+
+  useLayoutEffect(() => {
+    scrollToEnd();
+    const frame = requestAnimationFrame(scrollToEnd);
+    return () => cancelAnimationFrame(frame);
+  }, [messages]);
+
+  return (
+    <div className="chat-thread" ref={ref}>
+      {messages.map((msg) => (
+        <div key={msg.id} className="chat-row">
+          <article
+            className="chat-bubble"
+            data-status={msg.status}
+            title={getStatusText(msg.status)}
+          >
+            <span className="chat-bubble-recipient" title={msg.recipient}>
+              {msg.contact_name || msg.recipient}
+            </span>
+            {whatsappAccountLabel(msg, t) ? (
+              <span className="chat-bubble-wa">{whatsappAccountLabel(msg, t)}</span>
+            ) : null}
+            {msg.image_url && (
+              <img src={msg.image_url} alt="" className="chat-bubble-image" onLoad={scrollToEnd} />
+            )}
+            {msg.content ? <p className="chat-bubble-text">{msg.content}</p> : null}
+            <div className="chat-bubble-meta">
+              <time>
+                {formatScheduledTime(msg.scheduled_for, timeZone, hour12)}
+              </time>
+              <span className="chat-bubble-status" aria-label={getStatusText(msg.status)}>
+                {getStatusIcon(msg.status)}
+              </span>
+            </div>
+          </article>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 function weekTitle(days, t) {
   const start = days[0];
@@ -251,36 +300,14 @@ export default function CalendarView({ messages, onNewMessage }) {
       {selectedMessages.length === 0 ? (
         <p className="placeholder chat-empty">{t('agenda.emptyDay')}</p>
       ) : (
-        <div className="chat-thread">
-          {selectedMessages.map((msg) => (
-            <div key={msg.id} className="chat-row">
-              <article
-                className="chat-bubble"
-                data-status={msg.status}
-                title={getStatusText(msg.status)}
-              >
-                <span className="chat-bubble-recipient" title={msg.recipient}>
-                  {msg.contact_name || msg.recipient}
-                </span>
-                {whatsappAccountLabel(msg, t) ? (
-                  <span className="chat-bubble-wa">{whatsappAccountLabel(msg, t)}</span>
-                ) : null}
-                {msg.image_url && (
-                  <img src={msg.image_url} alt="" className="chat-bubble-image" />
-                )}
-                {msg.content ? <p className="chat-bubble-text">{msg.content}</p> : null}
-                <div className="chat-bubble-meta">
-                  <time>
-                    {formatScheduledTime(msg.scheduled_for, timeZone, hour12)}
-                  </time>
-                  <span className="chat-bubble-status" aria-label={getStatusText(msg.status)}>
-                    {getStatusIcon(msg.status)}
-                  </span>
-                </div>
-              </article>
-            </div>
-          ))}
-        </div>
+        <ChatThread
+          messages={selectedMessages}
+          t={t}
+          timeZone={timeZone}
+          hour12={hour12}
+          getStatusIcon={getStatusIcon}
+          getStatusText={getStatusText}
+        />
       )}
       <div className="calendar-detail-footer">
         <NewMessageButton onNewMessage={onNewMessage} />
