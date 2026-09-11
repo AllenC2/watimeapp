@@ -150,7 +150,7 @@ export default function WhatsAppStatusPill({ onOpenSession }) {
             {status.name ? ` · ${status.name}` : ''}
           </span>
         </div>
-        <span className="status-pill-state">{stateText(status, t)}</span>
+        <span className="status-pill-state" suppressHydrationWarning>{stateText(status, t)}</span>
       </button>
 
       {modal && createPortal(

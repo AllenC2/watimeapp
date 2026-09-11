@@ -172,7 +172,7 @@ export default function CalendarView({ messages, onNewMessage }) {
   const weekStartsOn = prefs.weekStartsOn === 'sunday' ? 'sunday' : 'monday';
   const weekdayOrder = weekStartsOn === 'sunday' ? [0, 1, 2, 3, 4, 5, 6] : [1, 2, 3, 4, 5, 6, 0];
   const weekdayLabels = weekdayOrder.map((day) => t(`weekdayShort.${day}`));
-  const timeZone = prefs.timezone || undefined;
+  const timeZone = prefs.timezone || 'UTC';
   const hour12 = prefs.hourClock === '12h';
   const today = new Date();
   const todayParts = civilDateInTimeZone(today, timeZone);
@@ -180,6 +180,14 @@ export default function CalendarView({ messages, onNewMessage }) {
   const [currentMonth, setCurrentMonth] = useState(todayParts.month);
   const [selectedDay, setSelectedDay] = useState(todayParts.day);
   const [dayPageOpen, setDayPageOpen] = useState(false);
+
+  useEffect(() => {
+    if (!prefs.timezone) return;
+    const parts = civilDateInTimeZone(new Date(), prefs.timezone);
+    setCurrentYear(parts.year);
+    setCurrentMonth(parts.month);
+    setSelectedDay(parts.day);
+  }, [prefs.timezone]);
 
   useEffect(() => {
     const media = window.matchMedia('(max-width: 768px)');

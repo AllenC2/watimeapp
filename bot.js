@@ -193,8 +193,6 @@ function startScheduler() {
             await new Promise(res => setTimeout(res, 500));
 
             const {
-              createNewsletterUpload,
-              isNewsletterJid,
               mimeFromPath,
               resolvePublicImage,
               assertChannelMediaAccepted,
@@ -209,12 +207,7 @@ function startScheduler() {
                 }
               : { text: msg.content };
 
-            const options = {};
-            if (imagePath && isNewsletterJid(resultJid)) {
-              options.upload = createNewsletterUpload(globalSock);
-            }
-
-            const sent = await globalSock.sendMessage(resultJid, payload, options);
+            const sent = await globalSock.sendMessage(resultJid, payload);
             if (!sent?.key?.id) {
               throw new Error('WhatsApp no confirmó el envío del mensaje.');
             }
